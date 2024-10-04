@@ -22,32 +22,16 @@ class MainActivity : AppCompatActivity() {
 
         Log.d("TAG", "onCreate: Activity")
 
-       /* // Add FirstFragment when activity is created
+        // Add FirstFragment when activity is created
         if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction()
                 .add(R.id.fragment_container, FirstFragment(), "firstFragment")
                 .commit()
-        }*/
-
-
-        val  btnClick:Button=findViewById(R.id.btnClick)
-
-
-
-        btnClick.setOnClickListener {
-
-            val intent = Intent(this, ActivityB::class.java)
-
-           intent.putExtra("msg","Hello from Activity A")
-
-            startActivity(intent)
-
         }
 
 
+
     }
-
-
 
     override fun onStart() {
         super.onStart()
