@@ -10,8 +10,13 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.android.androidtrainingclass.services.MyService
 
 class MainActivity : AppCompatActivity() {
+
+
+    private lateinit var startServiceButton: Button
+    private lateinit var stopServiceButton: Button
 
 
 
@@ -20,73 +25,22 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
-        Log.d("TAG", "onCreate: Activity")
 
-        // Add FirstFragment when activity is created
-        if (savedInstanceState == null) {
-            supportFragmentManager.beginTransaction()
-                .add(R.id.fragment_container, FirstFragment(), "firstFragment")
-                .commit()
+        startServiceButton = findViewById(R.id.startServiceButton)
+        stopServiceButton = findViewById(R.id.stopServiceButton)
+
+        // Start the service
+        startServiceButton.setOnClickListener {
+            val serviceIntent = Intent(this, MyService::class.java)
+            startService(serviceIntent)
+        }
+
+        // Stop the service
+        stopServiceButton.setOnClickListener {
+            val serviceIntent = Intent(this, MyService::class.java)
+            stopService(serviceIntent)
         }
 
 
-
     }
-
-    override fun onStart() {
-        super.onStart()
-
-
-        // Prepare the UI to be visible to the user
-
-        Log.d("A onStart", "A onStart started")
-    }
-
-    override fun onResume() {
-        super.onResume()
-
-
-
-        // Activity is now in the foreground and interactive
-
-        Log.d("A onResume", "A onResume started")
-    }
-
-    override fun onPause() {
-        super.onPause()
-
-
-        // Pause or save ongoing tasks (stop animations, etc.)
-
-
-        Log.d("A onPause", "A onPause started")
-       // Log.i("onResume", "onResume running")
-    }
-
-    override fun onStop() {
-        super.onStop()
-
-
-        // Release resources that are not needed while the activity is stopped
-
-
-        Log.d("A onStop", "A onStop started")
-    }
-
-    override fun onRestart() {
-        super.onRestart()
-
-        // Perform any necessary updates when activity restarts
-
-        Log.d("A onRestart", "A onRestart started")
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-
-        // Clean up resources and finalize actions before the activity is destroyed
-
-        Log.d("A onDestroy", "A onDestroy started")
-    }
-
 }

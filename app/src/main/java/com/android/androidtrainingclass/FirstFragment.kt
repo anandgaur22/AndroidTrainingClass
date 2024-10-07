@@ -52,13 +52,13 @@ class FirstFragment : Fragment() {
             bundle.putString("msg","From Fragment A")
 
 
-            val fragmentB= SecondFragment()
+         /*   val fragmentB= SecondFragment()
 
             fragmentB.arguments=bundle
 
             parentFragmentManager.beginTransaction().replace(R.id.fragment_container, fragmentB)
                 .addToBackStack(null)
-                .commit()
+                .commit()*/
 
         }
         return view
