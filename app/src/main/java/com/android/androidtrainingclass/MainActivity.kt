@@ -2,8 +2,11 @@ package com.android.androidtrainingclass
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
@@ -11,20 +14,19 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var etInputData: EditText
-    private lateinit var btnSave: Button
-    private lateinit var btnRead: Button
-    private lateinit var tvOutput: TextView
+    private lateinit var textView: TextView
 
-    private val fileName = "abc.txt"
 
 
 
@@ -34,63 +36,71 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
 
-        // Initialize the views
-        etInputData = findViewById(R.id.etInputData)
-        btnSave = findViewById(R.id.btnSave)
-        btnRead = findViewById(R.id.btnRead)
-        tvOutput = findViewById(R.id.tvOutput)
+        val writeButton: Button = findViewById(R.id.writeButton)
+        val readButton: Button = findViewById(R.id.readButton)
+        textView = findViewById(R.id.textView)
 
 
-        // Save button click listener
-        btnSave.setOnClickListener {
-            val data = etInputData.text.toString()
-            if (data.isNotEmpty()) {
-                saveToInternalStorage(data)
+        // Write to external storage
+        writeButton.setOnClickListener {
+            if (isExternalStorageWritable()) {
+                writeFileToExternalStorage("example.txt", "Hello from External Storage!")
             } else {
-                Toast.makeText(this, "Please enter some data", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "External storage not available", Toast.LENGTH_SHORT).show()
             }
         }
 
-        // Read button click listener
-        btnRead.setOnClickListener {
-            val data = readFromInternalStorage()
-            if (data != null) {
-                tvOutput.text = data
+        // Read from external storage
+        readButton.setOnClickListener {
+            if (isExternalStorageReadable()) {
+                val content = readFileFromExternalStorage("example.txt")
+                if (content != null) {
+                    textView.text = content
+                } else {
+                    Toast.makeText(this, "File not found", Toast.LENGTH_SHORT).show()
+                }
             } else {
-                tvOutput.text = "No data found!"
+                Toast.makeText(this, "Cannot read external storage", Toast.LENGTH_SHORT).show()
             }
         }
 
     }
 
+    private fun isExternalStorageWritable(): Boolean {
+        return Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED
+    }
 
-    // Function to save data to internal storage
-    private fun saveToInternalStorage(data: String) {
-        var fos: FileOutputStream? = null
+    // Check if external storage is readable
+    private fun isExternalStorageReadable(): Boolean {
+        val state = Environment.getExternalStorageState()
+        return state == Environment.MEDIA_MOUNTED || state == Environment.MEDIA_MOUNTED_READ_ONLY
+    }
+
+    // Write a file to external storage
+    private fun writeFileToExternalStorage(fileName: String, content: String) {
+        val externalStorageDir = getExternalFilesDir(null) // App-specific external directory
+        val file = File(externalStorageDir, fileName)
         try {
-            fos = openFileOutput(fileName, Context.MODE_PRIVATE)
-            fos.write(data.toByteArray())
-            Toast.makeText(this, "Data saved", Toast.LENGTH_SHORT).show()
+            val fos = FileOutputStream(file)
+            fos.write(content.toByteArray())
+            fos.close()
+            Toast.makeText(this, "File written to external storage", Toast.LENGTH_SHORT).show()
         } catch (e: IOException) {
             e.printStackTrace()
-        } finally {
-            fos?.close()
+            Toast.makeText(this, "Failed to write file", Toast.LENGTH_SHORT).show()
         }
     }
 
-    // Function to read data from internal storage
-    private fun readFromInternalStorage(): String? {
-        var fis: FileInputStream? = null
-        return try {
-            fis = openFileInput(fileName)
-            val fileContent = fis.readBytes().toString(Charsets.UTF_8)
-            fileContent
-        } catch (e: IOException) {
-            e.printStackTrace()
+    // Read a file from external storage
+    private fun readFileFromExternalStorage(fileName: String): String? {
+        val externalStorageDir = getExternalFilesDir(null)
+        val file = File(externalStorageDir, fileName)
+        return if (file.exists()) {
+            file.readText()
+        } else {
             null
-        } finally {
-            fis?.close()
         }
     }
+
 
 }

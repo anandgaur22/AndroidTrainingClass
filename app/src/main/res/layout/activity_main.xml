@@ -10,36 +10,25 @@
     tools:context=".MainActivity">
 
 
-    <EditText
-        android:id="@+id/etInputData"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Enter some text"
-        android:inputType="text" />
-
     <Button
-        android:id="@+id/btnSave"
+        android:id="@+id/writeButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Save"
-        android:padding="12dp" />
+        android:text="Write to External Storage" />
 
     <Button
-        android:id="@+id/btnRead"
+        android:id="@+id/readButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Read"
-        android:layout_marginTop="16dp"
-        android:padding="12dp" />
-
+        android:text="Read from External Storage"
+        android:layout_marginTop="16dp" />
 
     <TextView
-        android:id="@+id/tvOutput"
+        android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="data appear here"
-        android:textSize="18sp"
-        android:layout_marginTop="32dp" />
+        android:text="File Content will appear here"
+        android:layout_marginTop="16dp" />
 
 
 </LinearLayout>
