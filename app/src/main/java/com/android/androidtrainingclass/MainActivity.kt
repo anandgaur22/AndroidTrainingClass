@@ -13,17 +13,18 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.IOException
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var etUserName: EditText
+    private lateinit var etInputData: EditText
     private lateinit var btnSave: Button
-    private lateinit var btnRetrieve: Button
-    private lateinit var tvResult: TextView
+    private lateinit var btnRead: Button
+    private lateinit var tvOutput: TextView
 
-    // Key name to store the data
-    private val PREF_NAME = "MyPrefs"
-    private val KEY_NAME = "name"
+    private val fileName = "abc.txt"
 
 
 
@@ -34,46 +35,62 @@ class MainActivity : AppCompatActivity() {
 
 
         // Initialize the views
-        etUserName = findViewById(R.id.etUserName)
+        etInputData = findViewById(R.id.etInputData)
         btnSave = findViewById(R.id.btnSave)
-        btnRetrieve = findViewById(R.id.btnRetrieve)
-        tvResult = findViewById(R.id.tvResult)
+        btnRead = findViewById(R.id.btnRead)
+        tvOutput = findViewById(R.id.tvOutput)
+
 
         // Save button click listener
         btnSave.setOnClickListener {
-            val name = etUserName.text.toString()
-            if (name.isNotEmpty()) {
-                saveNameToPreferences(name)
+            val data = etInputData.text.toString()
+            if (data.isNotEmpty()) {
+                saveToInternalStorage(data)
             } else {
-                Toast.makeText(this, "Please enter your name", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Please enter some data", Toast.LENGTH_SHORT).show()
             }
         }
 
-        // Retrieve button click listener
-        btnRetrieve.setOnClickListener {
-            val savedName = retrieveNameFromPreferences()
-            if (savedName.isNotEmpty()) {
-                tvResult.text = "Retrieved Name: $savedName"
+        // Read button click listener
+        btnRead.setOnClickListener {
+            val data = readFromInternalStorage()
+            if (data != null) {
+                tvOutput.text = data
             } else {
-                tvResult.text = "No name saved yet!"
+                tvOutput.text = "No data found!"
             }
         }
 
-
     }
 
-    // Function to save the name to SharedPreferences
-    private fun saveNameToPreferences(name: String) {
-        val sharedPreferences = getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-        val editor = sharedPreferences.edit()
-        editor.putString(KEY_NAME, name)
-        editor.apply() // Save the changes asynchronously
-        Toast.makeText(this, "Name saved successfully", Toast.LENGTH_SHORT).show()
+
+    // Function to save data to internal storage
+    private fun saveToInternalStorage(data: String) {
+        var fos: FileOutputStream? = null
+        try {
+            fos = openFileOutput(fileName, Context.MODE_PRIVATE)
+            fos.write(data.toByteArray())
+            Toast.makeText(this, "Data saved", Toast.LENGTH_SHORT).show()
+        } catch (e: IOException) {
+            e.printStackTrace()
+        } finally {
+            fos?.close()
+        }
     }
 
-    // Function to retrieve the name from SharedPreferences
-    private fun retrieveNameFromPreferences(): String {
-        val sharedPreferences = getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-        return sharedPreferences.getString(KEY_NAME, "") ?: ""
+    // Function to read data from internal storage
+    private fun readFromInternalStorage(): String? {
+        var fis: FileInputStream? = null
+        return try {
+            fis = openFileInput(fileName)
+            val fileContent = fis.readBytes().toString(Charsets.UTF_8)
+            fileContent
+        } catch (e: IOException) {
+            e.printStackTrace()
+            null
+        } finally {
+            fis?.close()
+        }
     }
+
 }
