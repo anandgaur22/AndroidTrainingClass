@@ -14,9 +14,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AndroidTrainingClass"
         tools:targetApi="31">
-        <activity
-            android:name=".ActivityB"
-            android:exported="false" />
 
         <activity
             android:name=".MainActivity"
@@ -27,9 +24,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <!-- Declare the service here -->
-        <service android:name=".services.MyService" />
 
 
     </application>
