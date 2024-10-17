@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.os.AsyncTask
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -25,8 +26,9 @@ import java.io.IOException
 
 class MainActivity : AppCompatActivity() {
 
+    // Declare UI elements
     private lateinit var textView: TextView
-
+    private lateinit var buttonStartTask: Button
 
 
 
@@ -35,72 +37,53 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
-
-        val writeButton: Button = findViewById(R.id.writeButton)
-        val readButton: Button = findViewById(R.id.readButton)
+        // Initialize UI elements
         textView = findViewById(R.id.textView)
+        buttonStartTask = findViewById(R.id.buttonStartTask)
 
+        // Set button click listener
+        buttonStartTask.setOnClickListener {
+            // Start the AsyncTask
+            DownloadTask().execute("https://example.com/data")
+        }
 
-        // Write to external storage
-        writeButton.setOnClickListener {
-            if (isExternalStorageWritable()) {
-                writeFileToExternalStorage("example.txt", "Hello from External Storage!")
-            } else {
-                Toast.makeText(this, "External storage not available", Toast.LENGTH_SHORT).show()
+    }
+
+    // AsyncTask class to simulate downloading data
+    private inner class DownloadTask : AsyncTask<String, Int, String>() {
+
+        // Method that runs before the background task starts (UI thread)
+        override fun onPreExecute() {
+            super.onPreExecute()
+            // Update UI to show that the task is starting
+            textView.text = "Starting download..."
+        }
+
+        // Method to run the background task (background thread)
+        override fun doInBackground(vararg params: String?): String {
+            // Simulate a time-consuming task (e.g., downloading)
+            for (i in 1..100) {
+                // Update progress every 1%
+                publishProgress(i)
+                Thread.sleep(50) // Sleep for 50ms to simulate work
             }
+
+            // Return result after the background task completes
+            return "Download Complete"
         }
 
-        // Read from external storage
-        readButton.setOnClickListener {
-            if (isExternalStorageReadable()) {
-                val content = readFileFromExternalStorage("example.txt")
-                if (content != null) {
-                    textView.text = content
-                } else {
-                    Toast.makeText(this, "File not found", Toast.LENGTH_SHORT).show()
-                }
-            } else {
-                Toast.makeText(this, "Cannot read external storage", Toast.LENGTH_SHORT).show()
-            }
+        // Method to update the progress (UI thread)
+        override fun onProgressUpdate(vararg values: Int?) {
+            super.onProgressUpdate(*values)
+            // Update TextView to show current progress
+            textView.text = "Progress: ${values[0]}%"
         }
 
-    }
-
-    private fun isExternalStorageWritable(): Boolean {
-        return Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED
-    }
-
-    // Check if external storage is readable
-    private fun isExternalStorageReadable(): Boolean {
-        val state = Environment.getExternalStorageState()
-        return state == Environment.MEDIA_MOUNTED || state == Environment.MEDIA_MOUNTED_READ_ONLY
-    }
-
-    // Write a file to external storage
-    private fun writeFileToExternalStorage(fileName: String, content: String) {
-        val externalStorageDir = getExternalFilesDir(null) // App-specific external directory
-        val file = File(externalStorageDir, fileName)
-        try {
-            val fos = FileOutputStream(file)
-            fos.write(content.toByteArray())
-            fos.close()
-            Toast.makeText(this, "File written to external storage", Toast.LENGTH_SHORT).show()
-        } catch (e: IOException) {
-            e.printStackTrace()
-            Toast.makeText(this, "Failed to write file", Toast.LENGTH_SHORT).show()
+        // Method to handle the result after the background task completes (UI thread)
+        override fun onPostExecute(result: String?) {
+            super.onPostExecute(result)
+            // Display the result in the TextView
+            textView.text = result
         }
     }
-
-    // Read a file from external storage
-    private fun readFileFromExternalStorage(fileName: String): String? {
-        val externalStorageDir = getExternalFilesDir(null)
-        val file = File(externalStorageDir, fileName)
-        return if (file.exists()) {
-            file.readText()
-        } else {
-            null
-        }
-    }
-
-
 }
