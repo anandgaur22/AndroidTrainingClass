@@ -21,6 +21,8 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -28,11 +30,6 @@ import java.io.IOException
 
 class MainActivity : AppCompatActivity() {
 
-    // Declare UI elements
-    private lateinit var textView: TextView
-    private lateinit var buttonStartTask: Button
-
-    private val handler = Handler(Looper.getMainLooper())
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,12 +37,14 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
-        textView = findViewById(R.id.textView)
+        val recyclerView: RecyclerView = findViewById(R.id.recyclerView)
+        recyclerView.layoutManager = LinearLayoutManager(this)
 
-        // Delay of 3 seconds (3000 milliseconds)
-        handler.postDelayed({
-            textView.text = "Welcome to the App!"
-        }, 3000)
+        val itemList = listOf("Item 1", "Item 2", "Item 3")
+        val adapter = MyAdapter(itemList)
+
+        recyclerView.adapter = adapter
+
 
     }
 
