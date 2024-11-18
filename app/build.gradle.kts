@@ -50,4 +50,11 @@ dependencies {
 
     implementation (libs.androidx.recyclerview)
 
+    implementation (libs.retrofit)
+    implementation (libs.converter.gson)
+    implementation ("com.squareup.okhttp3:logging-interceptor:4.10.0")
+
+
+    implementation (libs.picasso)
+
 }

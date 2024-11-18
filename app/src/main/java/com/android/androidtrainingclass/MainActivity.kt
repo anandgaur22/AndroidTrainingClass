@@ -16,8 +16,10 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.ContactsContract
 import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -28,16 +30,32 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import retrofit2.Call
+import retrofit2.Callback
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
+import java.util.Calendar
+import java.util.Date
+import retrofit2.Response
 
-class MainActivity : AppCompatActivity() {
 
-    private val PERMISSIONS_REQUEST_CODE = 100
 
-    private lateinit var contactTextView: TextView
+class MainActivity : AppCompatActivity(){
+
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var progressBar: ProgressBar
+
+    private lateinit var employeeAdapter: EmployeeAdapter
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,106 +63,58 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
-        contactTextView = findViewById(R.id.textView)
+        recyclerView = findViewById(R.id.recyclerView)
+
+        progressBar = findViewById(R.id.progressBar)
 
 
-        // Check and request permissions to read and write contacts
-        if (ContextCompat.checkSelfPermission(this, READ_CONTACTS)
-            != PackageManager.PERMISSION_GRANTED ||
-            ContextCompat.checkSelfPermission(this, WRITE_CONTACTS)
-            != PackageManager.PERMISSION_GRANTED) {
+        recyclerView.layoutManager = LinearLayoutManager(this)
 
-            // Request READ and WRITE contacts permissions
-            ActivityCompat.requestPermissions(this,
-                arrayOf(READ_CONTACTS, WRITE_CONTACTS),
-                PERMISSIONS_REQUEST_CODE)
-        } else {
-            // If permission is already granted, proceed with contacts operations
-            readContacts()
-            //insertContact("John Doe", "9876543210")
-        }
 
+        fetchEmployees()
 
     }
 
 
-    // Function to query and read contacts
-    private fun readContacts() {
-        val contacts: MutableList<String> = ArrayList()
+    private fun fetchEmployees() {
+        progressBar.visibility = View.VISIBLE
+        val apiService = ApiService.create()
 
-        val cursor: Cursor? = contentResolver.query(
-            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-            null, null, null, null
-        )
+        // Update the API call to use the parameter as part of the form URL encoding
+        val call = apiService.getEmployeeList(UserIdRequest("121"))
+        call.enqueue(object : Callback<EmployeeResponse> {
+            override fun onResponse(call: Call<EmployeeResponse>, response: Response<EmployeeResponse>) {
+                progressBar.visibility = View.GONE
+                if (response.isSuccessful && response.body() != null) {
+                    val body = response.body()
+                    Log.d("API Response", body.toString()) // Log entire response
 
-        cursor?.use {
-            while (it.moveToNext()) {
-                // Get contact name and phone number
-                val name = it.getString(
-                    it.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
-                )
-                val phoneNumber = it.getString(
-                    it.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER)
-                )
-                contacts.add("Name: $name, Phone: $phoneNumber")
+                    if (body?.status == 1) {
+                        val employees = body.data
+                        Log.d("Employee List", employees.toString()) // Log employee list
+
+                        if (employees.isNotEmpty()) {
+                            employeeAdapter = EmployeeAdapter(employees)
+                            recyclerView.adapter = employeeAdapter
+                            recyclerView.visibility = View.VISIBLE
+                        } else {
+                            Toast.makeText(this@MainActivity, "No employees found", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        Toast.makeText(this@MainActivity, body?.message, Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Log.e("API Error", "Response code: ${response.code()}, message: ${response.message()}")
+                    Toast.makeText(this@MainActivity, "Failed to fetch employees", Toast.LENGTH_SHORT).show()
+                }
             }
-        }
-        contactTextView.text = contacts.toString()
 
-        // Display the contacts in log
-        for (contact in contacts) {
-            Log.d("ContactInfo", contact)
-
-
-        }
-    }
-
-    // Function to insert a new contact
-    private fun insertContact(displayName: String, phoneNumber: String) {
-        val ops = ArrayList<ContentProviderOperation>()
-
-        // Insert a new raw contact in the ContactsContract.RawContacts table
-        ops.add(
-            ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
-            .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, null)
-            .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, null)
-            .build())
-
-        // Insert the display name in ContactsContract.Data table
-        ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
-            .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
-            .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
-            .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, displayName)
-            .build())
-
-        // Insert the phone number in ContactsContract.Data table
-        ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
-            .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
-            .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
-            .withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, phoneNumber)
-            .withValue(ContactsContract.CommonDataKinds.Phone.TYPE, ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE)
-            .build())
-
-        // Apply the batch operation to insert the contact
-        try {
-            contentResolver.applyBatch(ContactsContract.AUTHORITY, ops)
-            Toast.makeText(this, "Contact inserted: $displayName", Toast.LENGTH_SHORT).show()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Toast.makeText(this, "Failed to insert contact", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    // Handle the result of the permission request
-    override fun onRequestPermissionsResult(
-        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == 100 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            readContacts()
-            insertContact("John Doe", "9876543210")
-        } else {
-            Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show()
-        }
+            override fun onFailure(call: Call<EmployeeResponse>, t: Throwable) {
+                progressBar.visibility = View.GONE
+                Log.e("API Failure", "Error: ${t.message}")
+                Toast.makeText(this@MainActivity, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
+            }
+        })
     }
 }
+
