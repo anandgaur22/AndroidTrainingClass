@@ -17,6 +17,12 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    buildFeatures {
+        viewBinding = true
+        dataBinding = true
+
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -53,7 +59,8 @@ dependencies {
     implementation (libs.retrofit)
     implementation (libs.converter.gson)
     implementation ("com.squareup.okhttp3:logging-interceptor:4.10.0")
-
+    implementation ("androidx.activity:activity:1.7.2")
+    implementation ("androidx.fragment:fragment:1.6.1")
 
     implementation (libs.picasso)
 
